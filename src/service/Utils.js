@@ -20,7 +20,9 @@ const SYSTEM_FRONT_MATTERS = [
   "originContent",
   // 已经处理了的
   "toc",
-  "draft"
+  "draft",
+  "research",
+  "headerimg",
 ];
 
 class Utils {
@@ -63,14 +65,14 @@ class Utils {
       categories: post.categories.data,
       summary: this.getPostSummary(post.content),
       layout: post.layout,
-      published: post.published
+      published: post.published,
     };
   }
 
   frontMatter(raw) {
     let data = yfm(raw);
     let ret = {};
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach((key) => {
       if (!SYSTEM_FRONT_MATTERS.includes(key)) {
         ret[key] = data[key];
       }

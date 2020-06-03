@@ -23,6 +23,10 @@
               >
                 <el-tag type="info" size="small">{{ tag.name }}</el-tag>
               </label>
+
+              <label class="article-cat" v-if="post.research">
+                <el-tag size="small">{{ post.research }}</el-tag>
+              </label>
             </header>
             <div class="article-entry" v-html="post.content"></div>
           </div>
@@ -39,7 +43,7 @@ const fs = require("fs");
 export default {
   data() {
     return {
-      inited: false
+      inited: false,
     };
   },
   mounted() {
@@ -100,13 +104,13 @@ export default {
     },
     startWith(str, prefix) {
       return str && prefix && str.indexOf(prefix) === 0;
-    }
+    },
   },
   computed: {
     post() {
       return this.$store.getters["Hexo/selectedPost"];
-    }
-  }
+    },
+  },
 };
 </script>
 

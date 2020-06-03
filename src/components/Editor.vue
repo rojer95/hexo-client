@@ -1,21 +1,28 @@
 <template>
-  <mavon-editor
-    ref="editor"
-    :value="value"
-    :toolbars="toolbars"
-    :ishljs="true"
-    @imgAdd="imgAdd"
-    @fullScreen="fullScreen"
-    @change="change"
-    @save="save"
-    :language="editorLanguage"
-    :boxShadow="false"
-    :subfield="true"
-    defaultOpen="edit"
-    :placeholder="$t('articleContentPlaceholder')"
-    codeStyle="atom-one-dark"
-    :style="{ height: contentHeight, width: '100%' }"
-  />
+  <div>
+    <mavon-editor
+      ref="editor"
+      :value="value"
+      :toolbars="toolbars"
+      :ishljs="true"
+      @imgAdd="imgAdd"
+      @fullScreen="fullScreen"
+      @change="change"
+      @save="save"
+      :language="editorLanguage"
+      :boxShadow="false"
+      :subfield="true"
+      defaultOpen="preview"
+      :placeholder="$t('articleContentPlaceholder')"
+      codeStyle="atom-one-dark"
+      :style="{ height: contentHeight, width: '100%' }"
+    />
+    <el-upload action :show-file-list="false" :limit="1" :before-upload="fileAdd">
+      <el-button size="small" type="primary">
+        <i class="el-icon-upload el-icon--right"></i> 上传文件
+      </el-button>
+    </el-upload>
+  </div>
 </template>
 
 <script>
@@ -94,69 +101,49 @@ export default {
     window.removeEventListener("resize", this.resize);
   },
   methods: {
-    /**
-     * 添加图片
-     */
-    async imgAdd(pos, file) {
+    async fileUpload(file) {
       let me = this;
       me.uploading = true;
       me.uploadingText = "正在上传 " + file.name;
       let sysConfig = me.$store.state.Config.config;
-
-      if (sysConfig.uploadType === "qiniu") {
-        qiniuUploader.upload(file, sysConfig).then(
-          url => {
-            me.$refs.editor.$img2Url(pos, url);
-            me.uploading = false;
-          },
-          err => {
-            me.$notify.error({ message: "图片上传失败：" + err });
-            me.uploading = false;
-          }
-        );
-      } else if (sysConfig.uploadType === "sm.ms") {
-        smmsUploader.upload(file).then(
-          url => {
-            me.$refs.editor.$img2Url(pos, url);
-            me.uploading = false;
-          },
-          err => {
-            me.$notify.error({ message: "图片上传失败：" + err });
-            me.uploading = false;
-          }
-        );
-      } else if (sysConfig.uploadType === "aliyunOss") {
-        try {
-          let url = await aliyunOssUploader.upload(file, sysConfig);
-          me.$refs.editor.$img2Url(pos, url);
-          me.uploading = false;
-        } catch (e) {
-          console.error(e);
-          me.$notify.error({ message: "图片上传失败：" + e });
-          me.uploading = false;
+      try {
+        let url;
+        if (sysConfig.uploadType === "qiniu") {
+          url = await qiniuUploader.upload(file, sysConfig);
+        } else if (sysConfig.uploadType === "sm.ms") {
+          url = await smmsUploader.upload(file);
+        } else if (sysConfig.uploadType === "aliyunOss") {
+          url = await aliyunOssUploader.upload(file, sysConfig);
+        } else if (sysConfig.uploadType === "tencentOss") {
+          url = await tencentOssUploader.upload(file, sysConfig);
+        } else {
+          url = await githubUploader.upload(file, sysConfig);
         }
-      } else if (sysConfig.uploadType === "tencentOss") {
-        try {
-          let url = await tencentOssUploader.upload(file, sysConfig);
-          me.$refs.editor.$img2Url(pos, url);
-          me.uploading = false;
-        } catch (e) {
-          console.error(e);
-          me.$notify.error({ message: "图片上传失败：" + e });
-          me.uploading = false;
-        }
-      } else {
-        githubUploader.upload(file, sysConfig).then(
-          url => {
-            me.$refs.editor.$img2Url(pos, url);
-            me.uploading = false;
-          },
-          err => {
-            me.$notify.error({ message: "图片上传失败：" + err });
-            me.uploading = false;
-          }
-        );
+        me.uploading = false;
+        return url;
+      } catch (error) {
+        me.$notify.error({ message: "图片上传失败：" + error });
+        me.uploading = false;
       }
+    },
+    async fileAdd(file) {
+      const link = await this.fileUpload(file);
+      const insert_text = {
+        prefix: `[input file name here](`,
+        subfix: `){target="_blank"}`,
+        str: link
+      };
+      this.$refs.editor.insertText(
+        this.$refs.editor.getTextareaDom(),
+        insert_text
+      );
+    },
+    /**
+     * 添加图片
+     */
+    async imgAdd(pos, file) {
+      const url = await this.fileUpload(file);
+      this.$refs.editor.$img2Url(pos, url);
     },
     /**
      * 内容变更

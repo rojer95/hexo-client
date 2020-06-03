@@ -18,6 +18,15 @@
             style="width: 100%;"
           ></el-input>
         </el-form-item>
+        <!-- desc -->
+        <el-form-item prop="desc">
+          <el-input
+            v-model="postForm.desc"
+            @input="formChanged = true"
+            :placeholder="$t('articleDescPlaceholder')"
+            style="width: 100%;"
+          ></el-input>
+        </el-form-item>
         <!-- 内容 -->
         <el-form-item prop="content">
           <markdown-editor
@@ -172,6 +181,99 @@
             </el-collapse-transition>
           </div>
 
+          <!-- stata -->
+          <div class="card" v-if="postForm.categories.includes('STATA')">
+            <div class="card-header">
+              <span>Stata类型</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show7 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show7 = !show7"
+              >
+              </el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show7">
+                <el-form-item prop="stata">
+                  <el-select
+                    v-model="postForm.stata"
+                    filterable
+                    allow-create
+                    default-first-option
+                    style="width:100%;"
+                    :placeholder="$t('selectStata')"
+                    @input="formChanged = true"
+                  >
+                    <el-option
+                      v-for="stata in statas"
+                      :key="stata"
+                      :label="stata"
+                      :value="stata"
+                    >
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
+
+          <!-- 分类 -->
+          <div class="card" v-if="postForm.categories.includes('Research')">
+            <div class="card-header">
+              <span>Research类型</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show5 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show5 = !show5"
+              >
+              </el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show5">
+                <el-form-item prop="research">
+                  <el-select
+                    v-model="postForm.research"
+                    filterable
+                    allow-create
+                    default-first-option
+                    style="width:100%;"
+                    :placeholder="$t('selectResearch')"
+                    @input="formChanged = true"
+                  >
+                    <el-option
+                      v-for="research in researchs"
+                      :key="research"
+                      :label="research"
+                      :value="research"
+                    >
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
+          <!-- 头图 -->
+          <div class="card">
+            <div class="card-header">
+              <span>头图</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show6 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show6 = !show6"
+              >
+              </el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show6">
+                <el-form-item prop="headerimg">
+                  <upload-input v-model="postForm.headerimg" />
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
           <!-- Front-matter -->
           <div class="card">
             <div class="card-header">
@@ -235,15 +337,19 @@ import MarkdownEditor from "@/components/Editor";
 import FrontMatter from "@/components/FrontMatter";
 import Utils from "@/service/Utils";
 import ClientAnalytics from "@/plugins/analytics";
+import UploadInput from "@/components/UploadInput";
 
 export default {
-  components: { MarkdownEditor, FrontMatter },
+  components: { MarkdownEditor, FrontMatter, UploadInput },
   data() {
     return {
       show1: true,
       show2: true,
       show3: true,
       show4: true,
+      show5: true,
+      show6: true,
+      show7: true,
       inited: false,
       saving: false,
       draft: false, // 是否是草稿
@@ -253,18 +359,27 @@ export default {
         content: "",
         tags: [],
         categories: [],
+        research: "",
+        stata: "",
+        desc: "",
+        headerimg: "",
         date: "",
         toc: false,
-        layout: "post" // 默认发表文章，还可取值draft表示发表草稿
+        layout: "post", // 默认发表文章，还可取值draft表示发表草稿
       },
       frontMatters: [],
       postFormRules: {
         title: [
           { required: true, message: "请输入标题", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在 3 到 50 个字符", trigger: "blur" }
+          {
+            min: 3,
+            max: 50,
+            message: "长度在 3 到 50 个字符",
+            trigger: "blur",
+          },
         ],
-        content: [{ required: true, message: "请输入内容", trigger: "blur" }]
-      }
+        content: [{ required: true, message: "请输入内容", trigger: "blur" }],
+      },
     };
   },
   mounted() {
@@ -320,12 +435,12 @@ export default {
             me.postForm.content = post._content.trim();
             break;
           case "tags":
-            post.tags.forEach(tag => {
+            post.tags.forEach((tag) => {
               me.postForm.tags.push(tag.name);
             });
             break;
           case "categories":
-            post.categories.forEach(cat => {
+            post.categories.forEach((cat) => {
               me.postForm.categories.push(cat.name);
             });
             break;
@@ -334,6 +449,18 @@ export default {
             break;
           case "toc":
             me.postForm.toc = post.toc;
+            break;
+          case "research":
+            me.postForm.research = post.research;
+            break;
+          case "headerimg":
+            me.postForm.headerimg = post.headerimg;
+            break;
+          case "stata":
+            me.postForm.stata = post.stata;
+            break;
+          case "desc":
+            me.postForm.desc = post.desc;
             break;
           default:
             break;
@@ -351,10 +478,10 @@ export default {
 
       // frontMatter
       let frontMatter = Utils.frontMatter(post.raw);
-      Object.keys(frontMatter).forEach(key => {
+      Object.keys(frontMatter).forEach((key) => {
         me.frontMatters.push({
           title: key,
-          value: frontMatter[key] + ""
+          value: frontMatter[key] + "",
         });
       });
 
@@ -438,14 +565,16 @@ export default {
       if (index > -1) {
         this.frontMatters.splice(index, 1);
       }
-    }
+    },
   },
   computed: {
     ...mapGetters({
       tags: "Hexo/tags",
-      categories: "Hexo/categories"
-    })
-  }
+      categories: "Hexo/categories",
+      researchs: "Hexo/research",
+      statas: "Hexo/stata",
+    }),
+  },
 };
 </script>
 

@@ -2,7 +2,13 @@
   <el-main class="setting-main">
     <el-form label-width="120px" label-position="left" :model="config">
       <el-form-item :label="$t('settingTitlePath')">
-        <el-input v-model="config.path" style="width:100%" />
+        <el-input v-model="config.path" style="width:100%">
+          <el-button
+            slot="append"
+            icon="el-icon-folder-opened"
+            @click="showFileDialog"
+          ></el-button>
+        </el-input>
       </el-form-item>
       <el-form-item :label="$t('settingTitleLanguage')">
         <el-select
@@ -184,8 +190,8 @@ export default {
         tencentOssSecretKey: "",
         tencentOssCOS_REGION: "",
         tencentOssBucket: "",
-        shellDeploy: false
-      }
+        shellDeploy: false,
+      },
     };
   },
   created() {
@@ -199,12 +205,25 @@ export default {
         message = "保存成功，变更语言需要重启后生效。";
       }
       await this.$store.dispatch("Config/setConfig", this.config);
+      // 重启hexo
+      await this.$store.dispatch("Hexo/destroy");
+      await this.$store.dispatch("Hexo/start");
       this.$notify.success({
         title: "成功",
-        message: message
+        message: message,
       });
-    }
-  }
+    },
+
+    showFileDialog() {
+      const me = this;
+      const dialog = require("electron").remote.dialog;
+      dialog.showOpenDialog({ properties: ["openDirectory"] }, (filename) => {
+        if (filename.length === 1) {
+          me.config.path = filename[0];
+        }
+      });
+    },
+  },
 };
 </script>
 

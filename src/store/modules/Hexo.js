@@ -11,7 +11,7 @@ const state = {
   selectedPostId: null,
   selectedTag: null,
   selectedCat: null,
-  selectedDrafts: false
+  selectedDrafts: false,
 };
 const mutations = {
   setInstance(state, hexo) {
@@ -31,7 +31,7 @@ const mutations = {
   },
   setSelectedDrafts(state, selectedDrafts) {
     state.selectedDrafts = selectedDrafts;
-  }
+  },
 };
 const actions = {
   /**
@@ -43,7 +43,7 @@ const actions = {
     let loading = this._vm.$loading({
       lock: true,
       text: "Loading...",
-      spinner: "el-icon-loading"
+      spinner: "el-icon-loading",
     });
     try {
       await context.dispatch("Config/initConfig", null, { root: true });
@@ -69,24 +69,27 @@ const actions = {
           // safe: true, // 安全模式，安全模式下不会加载第三方插件
           silent: true, // 开启安静模式。不在终端中显示任何信息。
           drafts: true, // 显示草稿，详见hexo/index.js#_showDrafts
-          config: os.homedir() + "/.hexo-client/_config.yml"
+          config: os.homedir() + "/.hexo-client/_config.yml",
         });
 
         await hexo.init();
         await hexo.watch();
 
         context.dispatch("UiStatus/setDialogFormVisible", false, {
-          root: true
+          root: true,
         });
         context.commit("setInstance", hexo);
         context.commit("setInited");
+
+        const datas = hexo.locals.get("data");
+        console.log(datas);
       } catch (e) {
         console.error(e);
         this._vm.$alert(
           "打开失败，你可以切换到开发者工具（View > Toggle Developer Tools）查看错误消息。异常反馈QQ群：618213781",
           "打开失败",
           {
-            confirmButtonText: "确定"
+            confirmButtonText: "确定",
           }
         );
       }
@@ -99,6 +102,7 @@ const actions = {
    */
   destroy(context) {
     context.state.instance.unwatch();
+    context.state.instance.exit();
   },
 
   /**
@@ -258,7 +262,7 @@ const actions = {
   async deletePost(context, postId) {
     let post = await context.dispatch("getPost", postId);
     let deferred = when.defer();
-    fs.unlink(post.full_source, err => {
+    fs.unlink(post.full_source, (err) => {
       if (err) {
         deferred.reject(err);
       } else {
@@ -280,7 +284,7 @@ const actions = {
       lock: true,
       text: "生成中...",
       spinner: "el-icon-loading",
-      background: "rgba(0, 0, 0, 0.7)"
+      background: "rgba(0, 0, 0, 0.7)",
     });
 
     let hexo = context.state.instance;
@@ -301,7 +305,7 @@ const actions = {
       loading.close();
       vm.$notify.error("生成失败");
     }
-  }
+  },
 };
 const getters = {
   /**
@@ -309,12 +313,12 @@ const getters = {
    * @param state
    * @returns {Array}
    */
-  tags: state => {
+  tags: (state) => {
     let tags = [];
     if (state.instance && state.instance.locals) {
       let temp = state.instance.locals.get("tags");
       if (temp && temp.length > 0) {
-        temp.forEach(tag => {
+        temp.forEach((tag) => {
           if (!tags.includes(tag.name)) {
             tags.push(tag.name);
           }
@@ -328,12 +332,12 @@ const getters = {
    * @param state
    * @returns {Array}
    */
-  categories: state => {
+  categories: (state) => {
     let categories = [];
     if (state.instance && state.instance.locals) {
       let temp = state.instance.locals.get("categories");
       if (temp && temp.length > 0) {
-        temp.forEach(category => {
+        temp.forEach((category) => {
           if (!categories.includes(category.name)) {
             categories.push(category.name);
           }
@@ -342,16 +346,47 @@ const getters = {
     }
     return categories;
   },
+
+  /**
+   * 所有的research分组
+   * @param state
+   * @returns {Array}
+   */
+  research: (state) => {
+    if (state.instance && state.instance.locals) {
+      let temp = state.instance.locals.get("data");
+      if (temp && temp.research) {
+        return temp.research;
+      }
+    }
+    return [];
+  },
+
+  /**
+   * 所有的stata分组
+   * @param state
+   * @returns {Array}
+   */
+  stata: (state) => {
+    if (state.instance && state.instance.locals) {
+      let temp = state.instance.locals.get("data");
+      if (temp && temp.stata) {
+        return temp.stata;
+      }
+    }
+    return [];
+  },
+
   /**
    * 所有的文章，按照时间倒序排列
    * @param state
    * @returns {Array}
    */
-  posts: state => {
+  posts: (state) => {
     let posts = [];
     let temp = state.instance.locals.get("posts").sort("date", -1);
     if (temp && temp.length > 0) {
-      temp.forEach(post => {
+      temp.forEach((post) => {
         posts.push(utils.formatPost(post));
       });
     }
@@ -362,11 +397,11 @@ const getters = {
    * @param state
    * @returns {Array}
    */
-  filteredPosts: state => {
+  filteredPosts: (state) => {
     let posts = [];
     let temp = state.instance.locals.get("posts").sort("date", -1);
     if (temp && temp.length > 0) {
-      temp.forEach(post => {
+      temp.forEach((post) => {
         if (state.selectedDrafts) {
           // 如果当前看的是草稿
           if (post.published) {
@@ -378,8 +413,8 @@ const getters = {
           }
           let tags = [];
           let categories = [];
-          post.tags.data.forEach(data => tags.push(data.name));
-          post.categories.data.forEach(data => categories.push(data.name));
+          post.tags.data.forEach((data) => tags.push(data.name));
+          post.categories.data.forEach((data) => categories.push(data.name));
           if (state.selectedTag) {
             if (
               !tags ||
@@ -410,7 +445,7 @@ const getters = {
    * @param state
    * @returns {string}
    */
-  selectedTreeItem: state => {
+  selectedTreeItem: (state) => {
     if (state.selectedDrafts) {
       return "drafts";
     } else if (state.selectedCat) {
@@ -425,7 +460,7 @@ const getters = {
    * @param state
    * @returns {{}}
    */
-  selectedPost: state => {
+  selectedPost: (state) => {
     let posts = state.instance.locals.get("posts").sort("date", -1);
     let selectedPostId = state.selectedPostId;
     if (!selectedPostId && posts.length > 0) {
@@ -444,7 +479,7 @@ const getters = {
     }
     let post = posts.findOne({ _id: selectedPostId }).toObject();
     return post;
-  }
+  },
 };
 
 export default {
@@ -452,5 +487,5 @@ export default {
   state,
   mutations,
   actions,
-  getters
+  getters,
 };

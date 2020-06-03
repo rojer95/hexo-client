@@ -17,6 +17,15 @@
             style="width: 100%;"
           ></el-input>
         </el-form-item>
+        <!-- desc -->
+        <el-form-item prop="desc">
+          <el-input
+            v-model="postForm.desc"
+            @input="formChanged = true"
+            :placeholder="$t('articleDescPlaceholder')"
+            style="width: 100%;"
+          ></el-input>
+        </el-form-item>
         <!-- 内容 -->
         <el-form-item prop="content">
           <markdown-editor
@@ -85,8 +94,8 @@
                       :loading="saving"
                       style="float: right;"
                       @click="submitForm()"
-                      >{{ $t("save") }}
-                    </el-button>
+                      >{{ $t("save") }}</el-button
+                    >
                   </el-col>
                 </div>
               </div>
@@ -102,8 +111,7 @@
                 type="text"
                 :icon="show2 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
                 @click="show2 = !show2"
-              >
-              </el-button>
+              ></el-button>
             </div>
             <el-collapse-transition>
               <div class="card-body" v-show="show2">
@@ -123,8 +131,7 @@
                       :key="tag"
                       :label="tag"
                       :value="tag"
-                    >
-                    </el-option>
+                    ></el-option>
                   </el-select>
                 </el-form-item>
               </div>
@@ -140,8 +147,7 @@
                 type="text"
                 :icon="show3 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
                 @click="show3 = !show3"
-              >
-              </el-button>
+              ></el-button>
             </div>
             <el-collapse-transition>
               <div class="card-body" v-show="show3">
@@ -161,32 +167,119 @@
                       :key="category"
                       :label="category"
                       :value="category"
-                    >
-                    </el-option>
+                    ></el-option>
                   </el-select>
                 </el-form-item>
               </div>
             </el-collapse-transition>
           </div>
 
+          <!-- stata -->
+          <div class="card" v-if="postForm.categories.includes('STATA')">
+            <div class="card-header">
+              <span>Stata类型</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show7 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show7 = !show7"
+              ></el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show7">
+                <el-form-item prop="stata">
+                  <el-select
+                    v-model="postForm.stata"
+                    filterable
+                    allow-create
+                    default-first-option
+                    style="width:100%;"
+                    :placeholder="$t('selectStata')"
+                    @input="formChanged = true"
+                  >
+                    <el-option
+                      v-for="stata in statas"
+                      :key="stata"
+                      :label="stata"
+                      :value="stata"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
+
+          <!-- 分类 -->
+          <div class="card" v-if="postForm.categories.includes('Research')">
+            <div class="card-header">
+              <span>Research类型</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show5 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show5 = !show5"
+              ></el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show5">
+                <el-form-item prop="research">
+                  <el-select
+                    v-model="postForm.research"
+                    filterable
+                    allow-create
+                    default-first-option
+                    style="width:100%;"
+                    :placeholder="$t('selectResearch')"
+                    @input="formChanged = true"
+                  >
+                    <el-option
+                      v-for="research in researchs"
+                      :key="research"
+                      :label="research"
+                      :value="research"
+                    ></el-option>
+                  </el-select>
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
+
+          <!-- 头图 -->
+          <div class="card">
+            <div class="card-header">
+              <span>头图</span>
+              <el-button
+                class="collapse"
+                type="text"
+                :icon="show6 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                @click="show6 = !show6"
+              ></el-button>
+            </div>
+            <el-collapse-transition>
+              <div class="card-body" v-show="show6">
+                <el-form-item prop="headerimg">
+                  <upload-input v-model="postForm.headerimg" />
+                </el-form-item>
+              </div>
+            </el-collapse-transition>
+          </div>
           <!-- Front-matter -->
           <div class="card">
             <div class="card-header">
-              <span
-                >Front-matter
+              <span>
+                Front-matter
                 <i
                   class="el-icon-question"
                   style="cursor: pointer;"
                   @click="openFrontMatterHelp"
-                ></i
-              ></span>
+                ></i>
+              </span>
               <el-button
                 class="collapse"
                 type="text"
                 :icon="show4 ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
                 @click="show4 = !show4"
-              >
-              </el-button>
+              ></el-button>
             </div>
             <el-collapse-transition>
               <div class="card-body" v-show="show4">
@@ -214,8 +307,8 @@
                   icon="el-icon-plus"
                   size="mini"
                   @click="openAddFrontMatter"
-                  >Add
-                </el-button>
+                  >Add</el-button
+                >
                 <front-matter ref="frontMatterEditor" @ok="addFrontMatter" />
               </div>
             </el-collapse-transition>
@@ -230,16 +323,20 @@
 import { mapGetters } from "vuex";
 import MarkdownEditor from "@/components/Editor";
 import FrontMatter from "@/components/FrontMatter";
+import UploadInput from "@/components/UploadInput";
 import ClientAnalytics from "@/plugins/analytics";
 
 export default {
-  components: { MarkdownEditor, FrontMatter },
+  components: { MarkdownEditor, FrontMatter, UploadInput },
   data() {
     return {
       show1: true,
       show2: true,
       show3: true,
       show4: true,
+      show5: true,
+      show6: true,
+      show7: true,
       saving: false,
       editLock: false,
       postForm: {
@@ -249,18 +346,27 @@ export default {
         content: "",
         tags: [],
         categories: [],
+        research: "",
+        stata: "",
+        desc: "",
+        headerimg: "",
         toc: false,
-        layout: "post" // 默认发表文章，还可取值draft表示发表草稿
+        layout: "post", // 默认发表文章，还可取值draft表示发表草稿
       },
       frontMatters: [],
       postFormRules: {
         title: [
           { required: true, message: "请输入标题", trigger: "blur" },
-          { min: 3, max: 50, message: "长度在 3 到 50 个字符", trigger: "blur" }
+          {
+            min: 3,
+            max: 50,
+            message: "长度在 3 到 50 个字符",
+            trigger: "blur",
+          },
         ],
-        content: [{ required: true, message: "请输入内容", trigger: "blur" }]
+        content: [{ required: true, message: "请输入内容", trigger: "blur" }],
       },
-      formChanged: false
+      formChanged: false,
     };
   },
   beforeRouteLeave(to, from, next) {
@@ -362,14 +468,16 @@ export default {
       if (index > -1) {
         this.frontMatters.splice(index, 1);
       }
-    }
+    },
   },
   computed: {
     ...mapGetters({
       tags: "Hexo/tags",
-      categories: "Hexo/categories"
-    })
-  }
+      categories: "Hexo/categories",
+      researchs: "Hexo/research",
+      statas: "Hexo/stata",
+    }),
+  },
 };
 </script>
 
