@@ -1,16 +1,16 @@
 <template>
-  <el-input readonly v-model="value">
+  <el-input :value="value" @input="change($event)">
     <template slot="append">
       <el-upload
-        action=""
+        action
         :show-file-list="false"
         :limit="1"
         :before-upload="imgAdd"
         :file-list="fileList"
       >
-        <el-button size="small" type="primary"
-          ><i class="el-icon-upload el-icon--right"></i
-        ></el-button>
+        <el-button size="small" type="primary">
+          <i class="el-icon-upload el-icon--right"></i>
+        </el-button>
       </el-upload>
     </template>
   </el-input>
@@ -27,10 +27,6 @@ export default {
   name: "UploadInput",
   props: {
     value: {
-      type: String,
-      default: "",
-    },
-    initValue: {
       type: String,
       default: "",
     },
